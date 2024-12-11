@@ -1,0 +1,8 @@
+pdfplumber
+matplotlib
+networkx
+pandas
+unidecode
+scipy
+requests
+psycopg2-binary
