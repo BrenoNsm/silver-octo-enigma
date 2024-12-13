@@ -5,4 +5,4 @@ pandas
 unidecode
 scipy
 requests
-psycopg2-binary
+pymongo
