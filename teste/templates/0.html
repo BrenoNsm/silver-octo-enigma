@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Rede Dinâmica de Pessoas e Atos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        #search-container {
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        input {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #network-container {
+            width: 50%;
+            height: 800px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .node {
+            stroke: #fff;
+            stroke-width: 1.5px;
+            cursor: pointer;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        .label {
+            font-size: 4px;
+            pointer-events: none;
+        }
+        #modal-detalhes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #modal-detalhes-content {
+            width: 60%;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        #modal-detalhes-content h2,
+        #modal-detalhes-content h3 {
+            margin: 10px 0;
+        }
+
+        #modal-detalhes-columns {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        #modal-detalhes-columns > div {
+            flex: 1;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+
+        #modal-detalhes button {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #modal-detalhes button:hover {
+            background: #0056b3;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="search-container">
+        <input type="text" id="search-bar" placeholder="Digite para buscar..." oninput="filtrarRede()">
+    </div>
+    <div id="network-container"></div>
+
+    <script>
+    const width = 928;
+    const height = 680;
+
+    const svg = d3.select("#network-container")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [-width / 2, -height / 2, width, height])
+        .attr("style", "max-width: 100%; height: auto;")
+        .call(d3.zoom().on("zoom", (event) => {
+            g.attr("transform", event.transform);
+        }));
+
+    const g = svg.append("g");
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    let allNodes = [];
+    let allLinks = [];
+    let filteredNodes = [];
+    let filteredLinks = [];
+
+    document.addEventListener('DOMContentLoaded', carregarDadosRede);
+
+    async function carregarDadosRede() {
+        const serverUrl = "http://localhost:5000";
+        const endpoint = "/get_network_data";
+
+        try {
+            const response = await axios.get(`${serverUrl}${endpoint}`);
+            const documentos = response.data;
+
+            processarDadosRede(documentos);
+        } catch (error) {
+            console.error('Erro ao carregar dados:', error);
+            alert('Falha ao carregar dados: ' + error.message);
+        }
+    }
+
+    function processarDadosRede(documentos) {
+        const cpfsAdicionados = {};
+
+        documentos.forEach(documento => {
+            const identificadorAto = documento["Identificador do Ato"];
+            const tipoAto = documento["Tipo do Ato"];
+            const numeroEdicao = documento["Número da Edição"];
+
+            allNodes.push({
+                id: identificadorAto,
+                group: 'ato',
+                tipoAto: tipoAto,
+                numeroEdicao: numeroEdicao
+            });
+
+            (documento.pessoas || []).forEach(pessoa => {
+                const nomePessoa = pessoa.nome;
+                const cpfPessoa = pessoa.cpf;
+
+                if (!cpfsAdicionados[cpfPessoa]) {
+                    allNodes.push({
+                        id: nomePessoa,
+                        group: 'pessoa'
+                    });
+                    cpfsAdicionados[cpfPessoa] = nomePessoa;
+                }
+
+                allLinks.push({
+                    source: identificadorAto,
+                    target: cpfsAdicionados[cpfPessoa]
+                });
+            });
+        });
+
+        filtrarRede();
+    }
+
+    function filtrarRede() {
+        const query = document.getElementById('search-bar').value.toLowerCase();
+        if (!query) {
+            filteredNodes = [...allNodes];
+            filteredLinks = [...allLinks];
+        } else {
+            const nodeSet = new Set();
+            filteredNodes = allNodes.filter(node => {
+                if (node.id.toLowerCase().includes(query)) {
+                    nodeSet.add(node.id);
+                    return true;
+                }
+                return false;
+            });
+
+            filteredLinks = allLinks.filter(link => {
+                if (nodeSet.has(link.source) || nodeSet.has(link.target)) {
+                    nodeSet.add(link.source);
+                    nodeSet.add(link.target);
+                    return true;
+                }
+                return false;
+            });
+
+            filteredNodes = allNodes.filter(node => nodeSet.has(node.id));
+        }
+
+        desenharRede(filteredNodes, filteredLinks);
+    }
+
+    function desenharRede(nodes, links) {
+        g.selectAll("*").remove();
+
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id))
+            .force("charge", d3.forceManyBody())
+            .force("x", d3.forceX())
+            .force("y", d3.forceY());
+
+        const link = g.append("g")
+            .attr("stroke", "#999")
+            .attr("stroke-opacity", 0.6)
+            .selectAll("line")
+            .data(links)
+            .join("line")
+            .attr("stroke-width", d => Math.sqrt(d.value || 1));
+
+        const node = g.append("g")
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 1.5)
+            .selectAll("circle")
+            .data(nodes)
+            .join("circle")
+            .attr("r", 8)
+            .attr("fill", d => color(d.group))
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended))
+            .on("click", async (event, d) => {
+                if (d.group === 'pessoa') {
+                    const response = await axios.get(`http://localhost:5000/get_person_data/${d.id}`);
+                    const personData = response.data;
+                    mostrarDetalhesPessoa(personData);
+                } else if (d.group === 'ato') {
+                    const response = await axios.get(`http://localhost:5000/get_act_data/${d.id}`);
+                    const actData = response.data;
+                    mostrarDetalhesAto(actData);
+                }
+            });
+
+        const labels = g.append("g")
+            .selectAll("text")
+            .data(nodes)
+            .join("text")
+            .attr("class", "label")
+            .attr("text-anchor", "middle")
+            .attr("dy", -10)
+            .text(d => d.id);
+
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+
+            labels
+                .attr("x", d => d.x)
+                .attr("y", d => d.y);
+        });
+
+        function dragstarted(event) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+        }
+
+        function dragged(event) {
+            event.subject.fx = event.x;
+            event.subject.fy = event.y;
+        }
+
+        function dragended(event) {
+            if (!event.active) simulation.alphaTarget(0);
+            event.subject.fx = null;
+            event.subject.fy = null;
+        }
+    }
+
+    function mostrarDetalhesPessoa(personData) {
+        const modalContent = `
+            <div id="modal-detalhes-content">
+                <h2>Detalhes de ${personData.nome}</h2>
+                <p><strong>CPF:</strong> ${personData.cpf || 'Não disponível'}</p>
+                <div id="modal-detalhes-columns">
+                    <div>
+                        <h3>Atos Associados:</h3>
+                        <ul>${personData.atos.map(ato => `<li>${ato}</li>`).join('')}</ul>
+                    </div>
+                    <div>
+                        <h3>Relacionados:</h3>
+                        <ul>${personData.relacionados
+                            .map(rel => `<li>${rel.nome} (${rel.frequencia})</li>`)
+                            .join('')}</ul>
+                    </div>
+                </div>
+                <button onclick="fecharModal()">Fechar</button>
+            </div>
+        `;
+
+        const modal = document.createElement('div');
+        modal.id = "modal-detalhes";
+        modal.innerHTML = modalContent;
+
+        document.body.appendChild(modal);
+    }
+
+    function mostrarDetalhesAto(actData) {
+        const modalContent = `
+            <div id="modal-detalhes-content">
+                <h2>${actData["Identificador do Ato"]}</h2>
+                <p><strong>Ano Documento:</strong> ${actData["Ano Documento"] || 'Não disponível'}</p>
+                <p><strong>Texto do Ato:</strong> ${actData["Texto do Ato"] || 'Não disponível'}</p>
+                <div id="modal-detalhes-columns">
+                    <div>
+                        <h3>Pessoas Relacionadas:</h3>
+                        <ul>${(actData.pessoas || []).map(p => `<li>${p.nome}</li>`).join('')}</ul>
+                    </div>
+                </div>
+                <button onclick="fecharModal()">Fechar</button>
+            </div>
+        `;
+
+        const modal = document.createElement('div');
+        modal.id = "modal-detalhes";
+        modal.innerHTML = modalContent;
+
+        document.body.appendChild(modal);
+    }
+
+    function fecharModal() {
+        const modal = document.getElementById("modal-detalhes");
+        if (modal) modal.remove();
+    }
+    </script>
+</body>
+</html>

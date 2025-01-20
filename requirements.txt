@@ -6,3 +6,7 @@ unidecode
 scipy
 requests
 pymongo
+flask
+flask_cors
+scrapy
+pyvis
