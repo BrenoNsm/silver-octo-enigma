@@ -19,55 +19,6 @@ collection = db[COLLECTION_NAME]
 def index():
     return render_template("/index.html")
 
-# Rota para buscar dados e retornar a rede completa no formato Gephi
-@app.route("/download_full_network", methods=["GET"])
-def download_full_network():
-    pessoas = collection.find()
-
-    pessoas = list(pessoas)
-    if not pessoas:
-        return jsonify({"error": "Nenhum dado encontrado para exportar."}), 404
-
-    # Construir o grafo usando NetworkX
-    graph = nx.Graph()
-
-    nodes_set = set()
-    person_to_acts = {}
-
-    for pessoa in pessoas:
-        ato_id = pessoa.get("Identificador do Ato", "Ato Desconhecido")
-        if ato_id not in nodes_set:
-            graph.add_node(ato_id, label=ato_id, type="Ato")
-            nodes_set.add(ato_id)
-
-        for p in pessoa.get("pessoas", []):
-            nome = p.get("nome")
-            cpf = p.get("cpf")
-            label = f"{nome} ({cpf})" if nome and cpf else nome or cpf
-
-            if label not in person_to_acts:
-                person_to_acts[label] = set()
-            person_to_acts[label].add(ato_id)
-
-    for person, acts in person_to_acts.items():
-        if person not in nodes_set:
-            graph.add_node(person, label=person, type="Pessoa")
-            nodes_set.add(person)
-        for act in acts:
-            graph.add_edge(person, act)
-
-    # Exportar o grafo para o formato GEXF
-    gexf_output = BytesIO()
-    nx.write_gexf(graph, gexf_output)
-    gexf_output.seek(0)
-
-    # Retornar o arquivo para download
-    return Response(
-        gexf_output,
-        mimetype="application/xml",
-        headers={"Content-Disposition": "attachment;filename=rede_completa.gexf"}
-    )
-
 # Rota para buscar dados no banco de dados e gerar o grafo
 @app.route("/search", methods=["POST"])
 def search():

@@ -40,7 +40,6 @@
             <input type="text" class="form-control" id="query" placeholder="Digite o nome ou CPF">
         </div>
         <button type="submit" class="btn btn-primary">Pesquisar</button>
-        <button type="button" id="downloadNetwork" class="btn btn-secondary">Baixar Rede Completa</button>
         <button type="button" id="generateReport" class="btn btn-success">Gerar Relatório</button>
     </form>
 
@@ -162,10 +161,6 @@
                 const error = xhr.responseJSON?.error || 'Erro desconhecido.';
                 alert(error);
             });
-        });
-
-        $('#downloadNetwork').click(function () {
-            window.location.href = '/download_full_network';
         });
 
         // Geração do Relatório
