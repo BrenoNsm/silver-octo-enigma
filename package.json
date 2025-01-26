@@ -1,0 +1,25 @@
+{
+  "name": "silver-octo-enigma",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BrenoNsm/silver-octo-enigma.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BrenoNsm/silver-octo-enigma/issues"
+  },
+  "homepage": "https://github.com/BrenoNsm/silver-octo-enigma#readme",
+  "dependencies": {
+    "bootstrap": "^5.3.0-alpha3",
+    "d3": "^7.9.0",
+    "jquery": "^3.7.1"
+  }
+}

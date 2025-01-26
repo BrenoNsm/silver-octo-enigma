@@ -17,7 +17,7 @@ collection = db[COLLECTION_NAME]
 # Rota para a página inicial
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("/index.html")
 
 # Rota para buscar dados e retornar a rede completa no formato Gephi
 @app.route("/download_full_network", methods=["GET"])
