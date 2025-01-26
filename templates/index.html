@@ -46,25 +46,6 @@
     <svg id="graph"></svg>
 </div>
 
-<!-- Modal para exibir o relatório -->
-<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="reportModalLabel">Relatório de Conexões</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h6 id="reportHeader"></h6>
-                <ul id="rankingList" class="list-group mt-3"></ul>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- jQuery -->
 <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
 <!-- D3.js -->
