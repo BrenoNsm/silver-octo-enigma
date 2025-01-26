@@ -23,13 +23,14 @@ def index():
 @app.route("/search", methods=["POST"])
 def search():
     query = request.form.get("query")
+    level = int(request.form.get("level", 1))  # Nível padrão é 1
+
     if not query:
         return jsonify({"error": "A consulta não pode estar vazia."}), 400
 
-    # Normalizar CPF (remover pontuação, caso necessário)
     query_normalized = query.replace(".", "").replace("-", "")
 
-    # Pesquisa no banco de dados
+    # Busca inicial no nível 1
     pessoas = collection.find({
         "$or": [
             {"pessoas.nome": {"$regex": query, "$options": "i"}},
@@ -42,7 +43,7 @@ def search():
     if not pessoas:
         return jsonify({"error": "Nenhum resultado encontrado."}), 404
 
-    # Formatar os dados para o grafo
+    # Montar grafo para o nível
     nodes = []
     links = []
     nodes_set = set()
@@ -63,7 +64,6 @@ def search():
                 person_to_acts[label] = set()
             person_to_acts[label].add(ato_id)
 
-    # Adicionar nós e consolidar conexões
     for person, acts in person_to_acts.items():
         if person not in nodes_set:
             nodes.append({"id": person, "label": person, "type": "Pessoa"})
@@ -71,7 +71,37 @@ def search():
         for act in acts:
             links.append({"source": act, "target": person})
 
+    # Expandir para nível 2 ou mais
+    if level > 1:
+        additional_pessoas = []
+        for person in person_to_acts.keys():
+            cpf = person.split("(")[-1].strip(")") if "(" in person else None
+            pessoa_data = collection.find({
+                "$or": [
+                    {"pessoas.nome": {"$regex": person, "$options": "i"}},
+                    {"pessoas.cpf": cpf}
+                ]
+            })
+            additional_pessoas.extend(pessoa_data)
+
+        for pessoa in additional_pessoas:
+            ato_id = pessoa.get("Identificador do Ato", "Ato Desconhecido")
+            if ato_id not in nodes_set:
+                nodes.append({"id": ato_id, "label": ato_id, "type": "Ato"})
+                nodes_set.add(ato_id)
+
+            for p in pessoa.get("pessoas", []):
+                nome = p.get("nome")
+                cpf = p.get("cpf")
+                label = f"{nome} ({cpf})" if nome and cpf else nome or cpf
+
+                if label not in nodes_set:
+                    nodes.append({"id": label, "label": label, "type": "Pessoa"})
+                    nodes_set.add(label)
+                links.append({"source": ato_id, "target": label})
+
     return jsonify({"graph_data": {"nodes": nodes, "links": links}})
+
 
 @app.route("/report")
 def report():
