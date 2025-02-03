@@ -19,6 +19,78 @@
   </style>
 </head>
 <body>
+   <!-- Navbar (Header) -->
+   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <!-- Título -->
+      <a class="navbar-brand" href="#"></a>
+      <!-- Logos -->
+      <a class="navbar-brand" href="/">
+        <img src="{{ url_for('static', filename='image/logo-uerr2.png') }}" alt="Logo UERR" width="150" height="40" class="d-inline-block align-text-top">
+      </a>
+      <a class="navbar-brand" href="/">
+        <img src="{{ url_for('static', filename='image/Logo Ciência da Computação UERR Horizontal sem fundo.png') }}" alt="Logo Ciência da Computação" width="150" height="40" class="d-inline-block align-text-top">
+      </a>
+      <!-- Botão de toggler -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <!-- Itens de navegação -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link active" href="/">Início</a>
+          </li>
+          <li class="nav-item">
+            <!-- "Sobre" abre um modal com o objetivo do sistema -->
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">Sobre</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+ <!-- Navbar (Header) -->
+
+ <!-- Modal Sobre -->
+ <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aboutModalLabel">Sobre</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p>
+          O <strong>Grupo de Pesquisa</strong> da <strong>Universidade Estadual de Roraima (UERR)</strong> desenvolveu este sistema com o objetivo de 
+          facilitar a análise de redes de conexões em atos administrativos, permitindo a identificação de relacionamentos e padrões 
+          que possam contribuir para a investigação de possíveis irregularidades.
+      </p>
+      <p>
+          O projeto é conduzido pelos professores orientadores:
+          <ul>
+              <li><strong>Dr. Bruno César Barreto de Figueirêdo <a id="modalActArquivo" href="http://buscatextual.cnpq.br/buscatextual/visualizacv.do?metodo=apresentar&id=K4482716E8" target="_blank">LATTES</a> </strong></li>
+              <li><strong>Mestre Francisco Carlos de Lima Pereira <a id="modalActArquivo" href="http://buscatextual.cnpq.br/buscatextual/visualizacv.do?metodo=apresentar&id=K4732802J0" target="_blank">LATTES</a></strong></li>
+          </ul>
+      </p>
+      <p>
+          Estudantes pesquisadores envolvidos no projeto:
+          <ul>
+              <li><strong>Breno Nascimento</strong></li>
+              <li><strong>Gabriela Monteiro</strong></li>
+              <li><strong>Larisa</strong></li>
+              <li><strong>Matheus Vicente</strong></li>
+          </ul>
+      </p>
+  </div>
+        <!-- Você pode personalizar essa mensagem conforme necessário -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="container mt-5">
   <h1>Relatório de Conexões</h1>
   <h4>{{ header }}</h4>

@@ -4,25 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pesquisa de Rede</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='image/LogoProjeto.ico') }}">
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
   <style>
+
     .node circle {
       stroke: #fff;
       stroke-width: 1.5px;
     }
-
     .node text {
       font: 10px sans-serif;
       pointer-events: none;
     }
-
     .link {
       fill: none;
       stroke: #999;
       stroke-opacity: 0.6;
     }
-
     svg {
       border: 1px solid #ddd;
       margin-top: 20px;
@@ -32,20 +31,63 @@
   </style>
 </head>
 <body>
-  <div class="container mt-5">
-    <h1 class="text-center">Pesquisa de Rede</h1>
-    <form id="searchForm" class="mt-4">
-      <div class="mb-3">
-        <label for="query" class="form-label">Nome ou CPF</label>
-        <input type="text" class="form-control" id="query" placeholder="Digite o nome ou CPF">
+  <!-- Navbar (Header) -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <!-- Título -->
+      <a class="navbar-brand" href="#"></a>
+      <!-- Logos -->
+      <a class="navbar-brand" href="/">
+        <img src="{{ url_for('static', filename='image/logo-uerr2.png') }}" alt="Logo UERR" width="150" height="40" class="d-inline-block align-text-top">
+      </a>
+      <a class="navbar-brand" href="/">
+        <img src="{{ url_for('static', filename='image/Logo Ciência da Computação UERR Horizontal sem fundo.png') }}" alt="Logo Ciência da Computação" width="150" height="40" class="d-inline-block align-text-top">
+      </a>
+      <!-- Botão de toggler -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <!-- Itens de navegação -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link active" href="#">Início</a>
+          </li>
+          <li class="nav-item">
+            <!-- "Sobre" abre um modal com o objetivo do sistema -->
+            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">Sobre</a>
+          </li>
+        </ul>
       </div>
-      <button type="submit" class="btn btn-primary">Pesquisar</button>
-      <button type="button" id="generateReport" class="btn btn-success">Gerar Relatório</button>
-    </form>
+    </div>
+  </nav>
 
-    <!-- Removidos os botões de nível antigos -->
+  <!-- Conteúdo Principal -->
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-8 offset-md-2">
+        <div class="text-center">
+          <img src="{{ url_for('static', filename='image/LogoProjeto.png') }}" class="rounded" alt="..." height="120">
+        </div>
+        <h1 class="text-center mb-4">Pesquisa de Rede</h1>
+        <form id="searchForm">
+          <!-- Input group moderno com botões integrados -->
+          <div class="input-group mb-3">
+            <input type="text" class="form-control" id="query" placeholder="Digite o nome ou CPF" aria-label="Nome ou CPF">
+            <button class="btn btn-outline-primary" type="submit">Pesquisar 🔎</button>
+            <button class="btn btn-outline-success" type="button" id="generateReport">Relatório 📑</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
-    <svg id="graph"></svg>
+    <!-- Área para renderizar o grafo -->
+    <div class="row">
+      <div class="col-12">
+        <svg id="graph"></svg>
+      </div>
+    </div>
   </div>
 
   <!-- Modal para seleção do nível de pesquisa -->
@@ -67,17 +109,38 @@
     </div>
   </div>
 
-  <!-- Modal para exibir o relatório -->
-  <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <!-- Modal Sobre -->
+  <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="reportModalLabel">Relatório de Conexões</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <h5 class="modal-title" id="aboutModalLabel">Sobre</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
         </div>
         <div class="modal-body">
-          <h6 id="reportHeader"></h6>
-          <ul id="rankingList" class="list-group mt-3"></ul>
+          <p>
+            O <strong>Grupo de Pesquisa</strong> da <strong>Universidade Estadual de Roraima (UERR)</strong> desenvolveu este sistema com o objetivo de 
+            facilitar a análise de redes de conexões em atos administrativos, permitindo a identificação de relacionamentos e padrões 
+            que possam contribuir para a investigação de possíveis irregularidades.
+        </p>
+        <p>
+            O projeto é conduzido pelos professores orientadores:
+            <ul>
+                <li><strong>Dr. Bruno César Barreto de Figueirêdo <a id="modalActArquivo" href="http://buscatextual.cnpq.br/buscatextual/visualizacv.do?metodo=apresentar&id=K4482716E8" target="_blank">LATTES</a> </strong></li>
+                <li><strong>Mestre Francisco Carlos de Lima Pereira <a id="modalActArquivo" href="http://buscatextual.cnpq.br/buscatextual/visualizacv.do?metodo=apresentar&id=K4732802J0" target="_blank">LATTES</a></strong></li>
+            </ul>
+        </p>
+        <p>
+            Estudantes pesquisadores envolvidos no projeto:
+            <ul>
+                <li><strong>Breno Nascimento</strong></li>
+                <li><strong>Gabriela Monteiro</strong></li>
+                <li><strong>Larisa</strong></li>
+                <li><strong>Matheus Vicente</strong></li>
+            </ul>
+        </p>
+    </div>
+          <!-- Você pode personalizar essa mensagem conforme necessário -->
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
@@ -197,7 +260,7 @@
         loadGraph(level);
       });
 
-      // Geração do Relatório
+      // Geração do Relatório: redireciona para /report passando o parâmetro de consulta
       $('#generateReport').click(function () {
         const query = $('#query').val();
 
@@ -206,7 +269,6 @@
           return;
         }
 
-        // Redirecionar para a página de relatório passando a consulta como parâmetro na URL
         window.location.href = `/report?query=${encodeURIComponent(query)}`;
       });
     });
