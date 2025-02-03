@@ -1,24 +1,389 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Conexões</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório de Conexões</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
+  <style>
+    /* Limita a altura do conteúdo das abas e permite rolagem */
+    .tab-content {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    /* Estilização similar à utilizada na página inicial para o SVG */
+    svg {
+      border: 1px solid #ddd;
+    }
+  </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1>Relatório de Conexões</h1>
-        <h4>{{ header }}</h4>
-        <ul class="list-group mt-3">
-            {% for item in ranking %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ item[0] }}
-                <span class="badge bg-primary rounded-pill">{{ item[1] }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-        <a href="/" class="btn btn-secondary mt-4">Voltar</a>
+<div class="container mt-5">
+  <h1>Relatório de Conexões</h1>
+  <h4>{{ header }}</h4>
+
+  <!-- Nav Tabs -->
+  <ul class="nav nav-tabs mt-4" id="reportTab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="ranking-tab" data-bs-toggle="tab" data-bs-target="#ranking" type="button" role="tab" aria-controls="ranking" aria-selected="true">
+        Ranking de Conexões
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="degree-tab" data-bs-toggle="tab" data-bs-target="#degree" type="button" role="tab" aria-controls="degree" aria-selected="false">
+        Centralidade de Grau
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="betweenness-tab" data-bs-toggle="tab" data-bs-target="#betweenness" type="button" role="tab" aria-controls="betweenness" aria-selected="false">
+        Centralidade de Intermediação
+      </button>
+    </li>
+  </ul>
+
+  <!-- Conteúdo das Abas -->
+  <div class="tab-content" id="reportTabContent">
+    <!-- Aba Ranking de Conexões com Accordion -->
+    <div class="tab-pane fade show active" id="ranking" role="tabpanel" aria-labelledby="ranking-tab">
+      <div class="accordion mt-3" id="accordionRanking">
+        {% for person, count in ranking %}
+        <div class="accordion-item">
+          <div class="accordion-header d-flex justify-content-between align-items-center" id="headingRanking{{ loop.index }}">
+            <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRanking{{ loop.index }}" aria-expanded="false" aria-controls="collapseRanking{{ loop.index }}">
+              {{ person }} - Conexões: {{ count }}
+            </button>
+            <button class="btn btn-outline-info btn-sm rede-btn ms-2" data-person="{{ person }}">Rede</button>
+          </div>
+          <div id="collapseRanking{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="headingRanking{{ loop.index }}" data-bs-parent="#accordionRanking">
+            <div class="accordion-body">
+              <ul class="list-group">
+                {% set key = person %}
+                {% if '(' in person %}
+                  {% set key = person.split(' (')[0] %}
+                {% endif %}
+                {% if key in acts_by_person %}
+                  {% for act in acts_by_person[key] %}
+                  <li class="list-group-item">
+                    <a href="#" class="act-link" 
+                       data-acttipo="{{ act.tipo }}" 
+                       data-actano="{{ act.ano }}" 
+                       data-acttexto="{{ act.texto }}" 
+                       data-actidentificador="{{ act.identificador }}"
+                       data-actarquivo="{{ act.arquivo }}">
+                      {{ act.identificador }}
+                    </a>
+                  </li>
+                  {% endfor %}
+                {% else %}
+                  <li class="list-group-item">Nenhum ato associado.</li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
     </div>
+
+    <!-- Aba Centralidade de Grau com Accordion -->
+    <div class="tab-pane fade" id="degree" role="tabpanel" aria-labelledby="degree-tab">
+      <div class="accordion mt-3" id="accordionDegree">
+        {% for person, centrality in degree_ranking %}
+        <div class="accordion-item">
+          <div class="accordion-header d-flex justify-content-between align-items-center" id="headingDegree{{ loop.index }}">
+            <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDegree{{ loop.index }}" aria-expanded="false" aria-controls="collapseDegree{{ loop.index }}">
+              {{ person }} - Centralidade de Grau: {{ centrality | round(3) }}
+            </button>
+            <button class="btn btn-outline-info btn-sm rede-btn ms-2" data-person="{{ person }}">Rede</button>
+          </div>
+          <div id="collapseDegree{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="headingDegree{{ loop.index }}" data-bs-parent="#accordionDegree">
+            <div class="accordion-body">
+              <ul class="list-group">
+                {% set key = person %}
+                {% if '(' in person %}
+                  {% set key = person.split(' (')[0] %}
+                {% endif %}
+                {% if key in acts_by_person %}
+                  {% for act in acts_by_person[key] %}
+                  <li class="list-group-item">
+                    <a href="#" class="act-link" 
+                       data-acttipo="{{ act.tipo }}" 
+                       data-actano="{{ act.ano }}" 
+                       data-acttexto="{{ act.texto }}" 
+                       data-actidentificador="{{ act.identificador }}"
+                       data-actarquivo="{{ act.arquivo }}">
+                      {{ act.identificador }}
+                    </a>
+                  </li>
+                  {% endfor %}
+                {% else %}
+                  <li class="list-group-item">Nenhum ato associado.</li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Aba Centralidade de Intermediação com Accordion -->
+    <div class="tab-pane fade" id="betweenness" role="tabpanel" aria-labelledby="betweenness-tab">
+      <div class="accordion mt-3" id="accordionBetweenness">
+        {% for person, centrality in betweenness_ranking %}
+        <div class="accordion-item">
+          <div class="accordion-header d-flex justify-content-between align-items-center" id="headingBetweenness{{ loop.index }}">
+            <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBetweenness{{ loop.index }}" aria-expanded="false" aria-controls="collapseBetweenness{{ loop.index }}">
+              {{ person }} - Centralidade de Intermediação: {{ centrality | round(3) }}
+            </button>
+            <button class="btn btn-outline-info btn-sm rede-btn ms-2" data-person="{{ person }}">Rede</button>
+          </div>
+          <div id="collapseBetweenness{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="headingBetweenness{{ loop.index }}" data-bs-parent="#accordionBetweenness">
+            <div class="accordion-body">
+              <ul class="list-group">
+                {% set key = person %}
+                {% if '(' in person %}
+                  {% set key = person.split(' (')[0] %}
+                {% endif %}
+                {% if key in acts_by_person %}
+                  {% for act in acts_by_person[key] %}
+                  <li class="list-group-item">
+                    <a href="#" class="act-link" 
+                       data-acttipo="{{ act.tipo }}" 
+                       data-actano="{{ act.ano }}" 
+                       data-acttexto="{{ act.texto }}" 
+                       data-actidentificador="{{ act.identificador }}"
+                       data-actarquivo="{{ act.arquivo }}">
+                      {{ act.identificador }}
+                    </a>
+                  </li>
+                  {% endfor %}
+                {% else %}
+                  <li class="list-group-item">Nenhum ato associado.</li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <a href="/" class="btn btn-secondary mt-4">Voltar</a>
+</div>
+
+<!-- Modal para Detalhes do Ato -->
+<div class="modal fade" id="actModal" tabindex="-1" aria-labelledby="actModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="actModalLabel">Detalhes do Ato</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Tipo do Ato:</strong> <span id="modalActTipo"></span></p>
+        <p><strong>Ano Documento:</strong> <span id="modalActAno"></span></p>
+        <p><strong>Texto do Ato:</strong></p>
+        <p id="modalActTexto"></p>
+        <p><strong>Arquivo:</strong> <a id="modalActArquivo" href="#" target="_blank">Abrir PDF</a></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Seleção do Nível da Rede -->
+<div class="modal fade" id="networkLevelModal" tabindex="-1" aria-labelledby="networkLevelModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="networkLevelModalLabel">Selecione o Nível de Rede</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p>Deseja ver a rede de nível 1 ou nível 2?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary network-level-btn" data-level="1">Nível 1</button>
+        <button type="button" class="btn btn-outline-primary network-level-btn" data-level="2">Nível 2</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Exibição da Rede -->
+<div class="modal fade" id="networkModal" tabindex="-1" aria-labelledby="networkModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl"> <!-- Modal maior para o grafo -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="networkModalLabel">Rede de <span id="networkPersonName"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <!-- SVG onde o grafo será renderizado -->
+        <svg id="networkGraph" style="width:100%; height:600px;"></svg>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts: Bootstrap JS Bundle, jQuery e D3.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<script>
+  $(document).ready(function(){
+    // Evento para exibir o modal com os detalhes do ato
+    $('.act-link').on('click', function(e){
+      e.preventDefault();
+      var actTipo = $(this).data('acttipo');
+      var actAno = $(this).data('actano');
+      var actTexto = $(this).data('acttexto');
+      var actIdentificador = $(this).data('actidentificador');
+      var actArquivo = $(this).data('actarquivo');
+
+      $('#actModalLabel').text(actIdentificador);
+      $('#modalActTipo').text(actTipo);
+      $('#modalActAno').text(actAno);
+      $('#modalActTexto').text(actTexto);
+
+      // Constrói o link para o PDF com parâmetro de busca (opcional)
+      var searchParam = "#search=" + encodeURIComponent(actTexto);
+      $('#modalActArquivo').attr('href', actArquivo + searchParam);
+
+      var actModal = new bootstrap.Modal(document.getElementById('actModal'));
+      actModal.show();
+    });
+    
+    // Variável para armazenar o nome da pessoa selecionada para rede
+    var selectedPerson = "";
+
+    // Ao clicar no botão "Rede"
+    $('.rede-btn').on('click', function(e){
+      e.stopPropagation(); // Evita o disparo do collapse
+      selectedPerson = $(this).data('person');
+      var networkLevelModal = new bootstrap.Modal(document.getElementById('networkLevelModal'));
+      networkLevelModal.show();
+    });
+
+    // Ao escolher o nível de rede no modal
+    $('.network-level-btn').on('click', function(){
+      var level = $(this).data('level');
+      // Fecha o modal de seleção do nível
+      var networkLevelModalEl = document.getElementById('networkLevelModal');
+      var networkLevelModal = bootstrap.Modal.getInstance(networkLevelModalEl);
+      networkLevelModal.hide();
+
+      // Atualiza o título do modal de rede
+      $('#networkPersonName').text(selectedPerson);
+
+      // Carrega a rede para a pessoa selecionada e o nível escolhido
+      loadNetworkForPerson(selectedPerson, level);
+    });
+
+    // Função para carregar e renderizar a rede de uma pessoa específica usando D3 (com as mesmas funcionalidades do index)
+    function loadNetworkForPerson(person, level) {
+  // Se o nome contém "(", extraímos apenas a parte anterior ao parênteses.
+  var queryPerson = person;
+  if (queryPerson.indexOf("(") !== -1) {
+    queryPerson = queryPerson.split(" (")[0];
+  }
+  
+  // Seleciona o SVG do modal e limpa o conteúdo anterior
+  var svg = d3.select("#networkGraph");
+  svg.selectAll("*").remove();
+
+  // Obtém dimensões do SVG
+  var width = parseInt(svg.style("width"));
+  var height = parseInt(svg.style("height"));
+
+  // Cria um grupo para o grafo e aplica zoom, como no index
+  var graphContainer = svg.append("g")
+                          .attr("class", "graph-container");
+
+  var zoom = d3.zoom()
+               .on("zoom", function(event) {
+                 graphContainer.attr("transform", event.transform);
+               });
+  svg.call(zoom);
+
+  // Requisição AJAX para obter os dados do grafo usando o endpoint /search
+  $.post('/search', { query: queryPerson, level: level }, function(data) {
+    if (data.graph_data) {
+      var nodes = data.graph_data.nodes;
+      var links = data.graph_data.links;
+
+      // Cria a simulação, semelhante à do index
+      var simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(function(d) { return d.id; }).distance(100))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+      // Cria os links usando .join("line") e adicionando a cor para que fiquem visíveis
+      var link = graphContainer.append("g")
+                      .attr("class", "links")
+                      .selectAll("line")
+                      .data(links)
+                      .join("line")
+                      .attr("class", "link")
+                      .style("stroke", "#999")
+                      .style("stroke-width", 1.5);
+
+      // Cria os nós
+      var node = graphContainer.append("g")
+                      .attr("class", "nodes")
+                      .selectAll("g")
+                      .data(nodes)
+                      .join("g")
+                      .attr("class", "node");
+
+      node.append("circle")
+        .attr("r", 5)
+        .attr("fill", function(d) { return d.type === "Pessoa" ? "#ff7f0e" : "#1f77b4"; });
+
+      node.append("text")
+        .text(function(d) { return d.label; })
+        .attr("x", 8)
+        .attr("y", 3);
+
+      simulation
+        .nodes(nodes)
+        .on("tick", ticked);
+
+      simulation.force("link").links(links);
+
+      function ticked() {
+        link.attr("x1", function(d) { return d.source.x; })
+            .attr("y1", function(d) { return d.source.y; })
+            .attr("x2", function(d) { return d.target.x; })
+            .attr("y2", function(d) { return d.target.y; });
+
+        node.attr("transform", function(d) {
+          return "translate(" + d.x + "," + d.y + ")";
+        });
+      }
+
+      // Exibe o modal da rede
+      var networkModal = new bootstrap.Modal(document.getElementById('networkModal'));
+      networkModal.show();
+    } else {
+      alert("Nenhum resultado encontrado para a rede.");
+    }
+  }).fail(function(xhr) {
+    var error = xhr.responseJSON?.error || 'Erro desconhecido.';
+    alert(error);
+  });
+}
+
+
+  });
+</script>
 </body>
 </html>

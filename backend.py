@@ -111,7 +111,7 @@ def report():
 
     query_normalized = query.replace(".", "").replace("-", "")
 
-    pessoas = collection.find({
+    documentos = collection.find({
         "$or": [
             {"pessoas.nome": {"$regex": query, "$options": "i"}},
             {"pessoas.cpf": query_normalized},
@@ -119,14 +119,14 @@ def report():
         ]
     })
 
-    pessoas = list(pessoas)
-    if not pessoas:
+    documentos = list(documentos)
+    if not documentos:
         return "Nenhum dado encontrado para gerar o relatório.", 404
 
-    # Construir o cabeçalho do relatório
+    # Identifica a pessoa principal (a partir da consulta)
     pessoa_principal = None
-    for pessoa in pessoas:
-        for p in pessoa.get("pessoas", []):
+    for doc in documentos:
+        for p in doc.get("pessoas", []):
             if query.lower() in (p.get("nome", "").lower() or "") or query_normalized == p.get("cpf", ""):
                 pessoa_principal = p
                 break
@@ -138,18 +138,67 @@ def report():
 
     header = f"{pessoa_principal.get('nome', 'Desconhecido')} ({pessoa_principal.get('cpf', 'CPF não disponível')})"
 
-    # Construir o ranking de conexões
+    # Ranking de conexões simples
     connection_count = {}
-    for pessoa in pessoas:
-        for p in pessoa.get("pessoas", []):
+    for doc in documentos:
+        for p in doc.get("pessoas", []):
             nome = p.get("nome", "Desconhecido")
             if nome != pessoa_principal.get("nome"):
                 connection_count[nome] = connection_count.get(nome, 0) + 1
-
     ranking = sorted(connection_count.items(), key=lambda x: x[1], reverse=True)
 
-    # Renderizar o HTML com os dados do relatório
-    return render_template("report.html", header=header, ranking=ranking)
+    # Agrupa os atos associados a cada pessoa
+    acts_by_person = {}
+    for doc in documentos:
+        identificador = doc.get("Identificador do Ato", "Ato Desconhecido")
+        tipo = doc.get("Tipo do Ato", "Tipo não disponível")
+        ano = doc.get("Ano Documento", "Ano não disponível")
+        texto = doc.get("Texto do Ato", "Texto não disponível")
+        for p in doc.get("pessoas", []):
+            nome = p.get("nome", "Desconhecido")
+            if nome not in acts_by_person:
+                acts_by_person[nome] = []
+            acts_by_person[nome].append({
+                "identificador": identificador,
+                "tipo": tipo,
+                "ano": ano,
+                "texto": texto,
+                "arquivo": doc.get("Diretório do Arquivo", "")
+            })
+
+    # Cálculo das métricas de centralidade (utilizando NetworkX)
+    import networkx as nx
+    G = nx.Graph()
+    for doc in documentos:
+        ato_id = doc.get("Identificador do Ato", "Ato Desconhecido")
+        G.add_node(ato_id, type="Ato")
+        for p in doc.get("pessoas", []):
+            nome = p.get("nome")
+            cpf = p.get("cpf")
+            person_label = f"{nome} ({cpf})" if nome and cpf else (nome or cpf or "Pessoa Desconhecida")
+            G.add_node(person_label, type="Pessoa")
+            G.add_edge(ato_id, person_label)
+
+    degree_centrality = nx.degree_centrality(G)
+    betweenness_centrality = nx.betweenness_centrality(G)
+
+    degree_ranking = []
+    betweenness_ranking = []
+    for node, data in G.nodes(data=True):
+        if data.get("type") == "Pessoa":
+            degree_ranking.append((node, degree_centrality.get(node, 0)))
+            betweenness_ranking.append((node, betweenness_centrality.get(node, 0)))
+    degree_ranking = sorted(degree_ranking, key=lambda x: x[1], reverse=True)
+    betweenness_ranking = sorted(betweenness_ranking, key=lambda x: x[1], reverse=True)
+
+    return render_template(
+        "report.html",
+        header=header,
+        ranking=ranking,
+        acts_by_person=acts_by_person,
+        degree_ranking=degree_ranking,
+        betweenness_ranking=betweenness_ranking
+    )
 
 
 # Executa o servidor Flask

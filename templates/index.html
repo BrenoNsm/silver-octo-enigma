@@ -1,199 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pesquisa de Rede</title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <style>
-        .node circle {
-            stroke: #fff;
-            stroke-width: 1.5px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pesquisa de Rede</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <style>
+    .node circle {
+      stroke: #fff;
+      stroke-width: 1.5px;
+    }
 
-        .node text {
-            font: 10px sans-serif;
-            pointer-events: none;
-        }
+    .node text {
+      font: 10px sans-serif;
+      pointer-events: none;
+    }
 
-        .link {
-            fill: none;
-            stroke: #999;
-            stroke-opacity: 0.6;
-        }
+    .link {
+      fill: none;
+      stroke: #999;
+      stroke-opacity: 0.6;
+    }
 
-        svg {
-            border: 1px solid #ddd;
-            margin-top: 20px;
-            width: 100%;
-            height: 600px;
-        }
-    </style>
+    svg {
+      border: 1px solid #ddd;
+      margin-top: 20px;
+      width: 100%;
+      height: 600px;
+    }
+  </style>
 </head>
 <body>
-<div class="container mt-5">
+  <div class="container mt-5">
     <h1 class="text-center">Pesquisa de Rede</h1>
     <form id="searchForm" class="mt-4">
-        <div class="mb-3">
-            <label for="query" class="form-label">Nome ou CPF</label>
-            <input type="text" class="form-control" id="query" placeholder="Digite o nome ou CPF">
-        </div>
-        <button type="submit" class="btn btn-primary">Pesquisar</button>
-        <button type="button" id="generateReport" class="btn btn-success">Gerar Relatório</button>
+      <div class="mb-3">
+        <label for="query" class="form-label">Nome ou CPF</label>
+        <input type="text" class="form-control" id="query" placeholder="Digite o nome ou CPF">
+      </div>
+      <button type="submit" class="btn btn-primary">Pesquisar</button>
+      <button type="button" id="generateReport" class="btn btn-success">Gerar Relatório</button>
     </form>
 
-    <!-- Botões de nível -->
-    <div id="levelControls" class="text-center mt-3">
-        <button class="btn btn-outline-primary" id="level1" data-level="1">Nível 1</button>
-        <button class="btn btn-outline-primary" id="level2" data-level="2">Nível 2</button>
-    </div>
+    <!-- Removidos os botões de nível antigos -->
 
     <svg id="graph"></svg>
-</div>
+  </div>
 
-<!-- Modal para exibir o relatório -->
-<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <!-- Modal para seleção do nível de pesquisa -->
+  <div class="modal fade" id="searchLevelModal" tabindex="-1" aria-labelledby="searchLevelModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="reportModalLabel">Relatório de Conexões</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h6 id="reportHeader"></h6>
-                <ul id="rankingList" class="list-group mt-3"></ul>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="searchLevelModalLabel">Selecione o Nível de Pesquisa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
         </div>
+        <div class="modal-body">
+          <p>Deseja pesquisar com nível 1 ou nível 2?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" id="modalLevel1" data-level="1">Nível 1</button>
+          <button type="button" class="btn btn-outline-primary" id="modalLevel2" data-level="2">Nível 2</button>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- jQuery -->
-<script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-<!-- D3.js -->
-<script src="{{ url_for('static', filename='js/d3.min.js') }}"></script>
-<!-- Bootstrap JS -->
-<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-<script>
+  <!-- Modal para exibir o relatório -->
+  <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reportModalLabel">Relatório de Conexões</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <h6 id="reportHeader"></h6>
+          <ul id="rankingList" class="list-group mt-3"></ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery -->
+  <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+  <!-- D3.js -->
+  <script src="{{ url_for('static', filename='js/d3.min.js') }}"></script>
+  <!-- Bootstrap JS -->
+  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+  <script>
     $(document).ready(function () {
-        const svg = d3.select("#graph");
-        const width = parseInt(svg.style("width"));
-        const height = parseInt(svg.style("height"));
+      const svg = d3.select("#graph");
+      const width = parseInt(svg.style("width"));
+      const height = parseInt(svg.style("height"));
 
-        let simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id(d => d.id).distance(100))
-            .force("charge", d3.forceManyBody().strength(-300))
-            .force("center", d3.forceCenter(width / 2, height / 2));
+      let simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2));
 
-        let zoom = d3.zoom()
-            .on("zoom", (event) => {
-                svg.select("g.graph-container").attr("transform", event.transform);
-            });
+      let zoom = d3.zoom()
+        .on("zoom", (event) => {
+          svg.select("g.graph-container").attr("transform", event.transform);
+        });
 
-        svg.call(zoom);
+      svg.call(zoom);
 
-        const graphContainer = svg.append("g")
-            .attr("class", "graph-container");
+      const graphContainer = svg.append("g")
+        .attr("class", "graph-container");
 
-        // Função para carregar dados do grafo
-        function loadGraph(level) {
-            const query = $('#query').val();
+      // Função para carregar dados do grafo
+      function loadGraph(level) {
+        const query = $('#query').val();
 
-            if (!query) {
-                alert('Por favor, insira um nome ou CPF.');
-                return;
-            }
-
-            $.post('/search', { query: query, level: level }, function (data) {
-                if (data.graph_data) {
-                    const { nodes, links } = data.graph_data;
-
-                    graphContainer.selectAll("*").remove(); // Limpa o grafo anterior
-
-                    simulation.stop(); // Para a simulação anterior
-
-                    simulation = d3.forceSimulation() // Reinicia a simulação
-                        .force("link", d3.forceLink().id(d => d.id).distance(100))
-                        .force("charge", d3.forceManyBody().strength(-300))
-                        .force("center", d3.forceCenter(width / 2, height / 2));
-
-                    const link = graphContainer.append("g")
-                        .attr("class", "links")
-                        .selectAll("line")
-                        .data(links)
-                        .join("line")
-                        .attr("class", "link")
-                        .style("stroke-width", 1.5);
-
-                    const node = graphContainer.append("g")
-                        .attr("class", "nodes")
-                        .selectAll("g")
-                        .data(nodes)
-                        .join("g")
-                        .attr("class", "node");
-
-                    node.append("circle")
-                        .attr("r", 5)
-                        .attr("fill", d => d.type === "Pessoa" ? "#ff7f0e" : "#1f77b4");
-
-                    node.append("text")
-                        .text(d => d.label)
-                        .attr("x", 8)
-                        .attr("y", 3);
-
-                    simulation
-                        .nodes(nodes)
-                        .on("tick", ticked);
-
-                    simulation.force("link").links(links);
-
-                    function ticked() {
-                        link
-                            .attr("x1", d => d.source.x)
-                            .attr("y1", d => d.source.y)
-                            .attr("x2", d => d.target.x)
-                            .attr("y2", d => d.target.y);
-
-                        node
-                            .attr("transform", d => `translate(${d.x},${d.y})`);
-                    }
-                } else {
-                    alert('Nenhum resultado encontrado.');
-                }
-            }).fail(function (xhr) {
-                const error = xhr.responseJSON?.error || 'Erro desconhecido.';
-                alert(error);
-            });
+        if (!query) {
+          alert('Por favor, insira um nome ou CPF.');
+          return;
         }
 
-        // Eventos dos botões de nível
-        $('#levelControls button').click(function () {
-            const level = $(this).data('level');
-            loadGraph(level);
-        });
+        $.post('/search', { query: query, level: level }, function (data) {
+          if (data.graph_data) {
+            const { nodes, links } = data.graph_data;
 
-        // Evento do formulário de busca
-        $('#searchForm').submit(function (e) {
-            e.preventDefault();
-            loadGraph(1); // Carregar o nível 1 como padrão
-        });
+            graphContainer.selectAll("*").remove(); // Limpa o grafo anterior
 
-        // Geração do Relatório
-        $('#generateReport').click(function () {
-            const query = $('#query').val();
+            simulation.stop(); // Para a simulação anterior
 
-            if (!query) {
-                alert('Por favor, insira um nome ou CPF antes de gerar o relatório.');
-                return;
+            simulation = d3.forceSimulation() // Reinicia a simulação
+              .force("link", d3.forceLink().id(d => d.id).distance(100))
+              .force("charge", d3.forceManyBody().strength(-300))
+              .force("center", d3.forceCenter(width / 2, height / 2));
+
+            const link = graphContainer.append("g")
+              .attr("class", "links")
+              .selectAll("line")
+              .data(links)
+              .join("line")
+              .attr("class", "link")
+              .style("stroke-width", 1.5);
+
+            const node = graphContainer.append("g")
+              .attr("class", "nodes")
+              .selectAll("g")
+              .data(nodes)
+              .join("g")
+              .attr("class", "node");
+
+            node.append("circle")
+              .attr("r", 5)
+              .attr("fill", d => d.type === "Pessoa" ? "#ff7f0e" : "#1f77b4");
+
+            node.append("text")
+              .text(d => d.label)
+              .attr("x", 8)
+              .attr("y", 3);
+
+            simulation
+              .nodes(nodes)
+              .on("tick", ticked);
+
+            simulation.force("link").links(links);
+
+            function ticked() {
+              link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+              node
+                .attr("transform", d => `translate(${d.x},${d.y})`);
             }
-
-            // Redirecionar para a página de relatório passando a consulta como parâmetro na URL
-            window.location.href = `/report?query=${encodeURIComponent(query)}`;
+          } else {
+            alert('Nenhum resultado encontrado.');
+          }
+        }).fail(function (xhr) {
+          const error = xhr.responseJSON?.error || 'Erro desconhecido.';
+          alert(error);
         });
+      }
+
+      // Ao submeter o formulário, exibe o modal para seleção do nível
+      $('#searchForm').submit(function (e) {
+        e.preventDefault();
+        $('#searchLevelModal').modal('show');
+      });
+
+      // Eventos para os botões do modal de seleção de nível
+      $('#modalLevel1, #modalLevel2').click(function () {
+        const level = $(this).data('level');
+        $('#searchLevelModal').modal('hide');
+        loadGraph(level);
+      });
+
+      // Geração do Relatório
+      $('#generateReport').click(function () {
+        const query = $('#query').val();
+
+        if (!query) {
+          alert('Por favor, insira um nome ou CPF antes de gerar o relatório.');
+          return;
+        }
+
+        // Redirecionar para a página de relatório passando a consulta como parâmetro na URL
+        window.location.href = `/report?query=${encodeURIComponent(query)}`;
+      });
     });
-</script>
+  </script>
 </body>
 </html>
