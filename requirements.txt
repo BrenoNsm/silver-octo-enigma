@@ -10,3 +10,4 @@ flask_cors
 scrapy
 Flask-Caching
 igraph
+openpyxl
