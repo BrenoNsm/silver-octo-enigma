@@ -8,20 +8,8 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
   <style>
-    .node circle {
-      stroke: #fff;
-      stroke-width: 1.5px;
-    }
-    .node text {
-      font: 10px sans-serif;
-      pointer-events: none;
-    }
-    .link {
-      fill: none;
-      stroke: #999;
-      stroke-opacity: 0.6;
-    }
-    svg {
+    /* Estilo para o canvas (substituindo o svg) */
+    canvas {
       border: 1px solid #ddd;
       margin-top: 20px;
       width: 100%;
@@ -83,7 +71,7 @@
         </form>      
       </div>
     </div>
-    <!-- Conta dos nos e arestas -->
+    <!-- Conta dos nós e arestas -->
     <div class="row">
       <div class="col-md-12">
         <div id="graph-info" class="alert alert-info text-center">
@@ -95,11 +83,10 @@
       </div>
     </div>
     
-
-    <!-- Área para renderizar o grafo -->
+    <!-- Área para renderizar o grafo (Canvas em vez de SVG) -->
     <div class="row">
       <div class="col-12">
-        <svg id="graph"></svg>
+        <canvas id="graph"></canvas>
       </div>
     </div>
   </div>

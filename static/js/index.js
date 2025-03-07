@@ -1,23 +1,67 @@
 $(document).ready(function () {
-  const svg = d3.select("#graph");
-  const width = parseInt(svg.style("width"));
-  const height = parseInt(svg.style("height"));
+  // Configura o canvas e o contexto
+  const canvas = d3.select("#graph").node();
+  const context = canvas.getContext("2d");
+  const width = canvas.width = canvas.clientWidth;
+  const height = canvas.height = canvas.clientHeight;
 
-  let simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(d => d.id).distance(100))
-    .force("charge", d3.forceManyBody().strength(-300))
-    .force("center", d3.forceCenter(width / 2, height / 2));
+  // Variáveis globais para os dados e zoom
+  let nodes = [], links = [];
+  let currentTransform = d3.zoomIdentity;
+  let worker;  // Web Worker para a simulação
 
-  let zoom = d3.zoom()
-    .on("zoom", (event) => {
-      svg.select("g.graph-container").attr("transform", event.transform);
+  // Configura o zoom no canvas
+  d3.select(canvas)
+    .call(d3.zoom()
+      .scaleExtent([0.1, 10])
+      .on("zoom", (event) => {
+        currentTransform = event.transform;
+        draw();
+      })
+    );
+
+  // Função para desenhar o grafo no canvas
+  function draw() {
+    context.save();
+    context.clearRect(0, 0, width, height);
+    // Aplica o transform do zoom
+    context.translate(currentTransform.x, currentTransform.y);
+    context.scale(currentTransform.k, currentTransform.k);
+
+    // Desenha as arestas (links)
+    context.strokeStyle = "#999";
+    context.lineWidth = 1.5;
+    links.forEach(link => {
+      // Se os nós fonte e destino tiverem sido atualizados pela simulação
+      context.beginPath();
+      context.moveTo(link.source.x, link.source.y);
+      context.lineTo(link.target.x, link.target.y);
+      context.stroke();
     });
-  svg.call(zoom);
 
-  const graphContainer = svg.append("g")
-    .attr("class", "graph-container");
+    // LOD: Se o zoom estiver baixo, desenha somente os nós do tipo "Ato"
+    nodes.forEach(node => {
+      if (currentTransform.k < 0.7 && node.type !== "Ato") return;
 
-  // Função para carregar dados do grafo
+      context.beginPath();
+      context.arc(node.x, node.y, 5, 0, 2 * Math.PI);
+      context.fillStyle = node.type === "Pessoa" ? "#ff7f0e" : "#1f77b4";
+      context.fill();
+      context.strokeStyle = "#fff";
+      context.lineWidth = 1.5;
+      context.stroke();
+
+      // Desenha o rótulo somente se o zoom estiver suficiente
+      if (currentTransform.k >= 1) {
+        context.font = "10px sans-serif";
+        context.fillStyle = "#000";
+        context.fillText(node.label, node.x + 8, node.y + 3);
+      }
+    });
+    context.restore();
+  }
+
+  // Função para carregar dados do grafo (sem alterações na lógica de busca)
   function loadGraph(level) {
     const query = $('#query').val();
   
@@ -28,76 +72,42 @@ $(document).ready(function () {
   
     $.post('/search', { query: query, level: level }, function (data) {
       if (data.graph_data) {
-        const { nodes, links } = data.graph_data;
+        ({ nodes, links } = data.graph_data);
   
-        // Contagem de nós e arestas
-        const totalNodes = nodes.length;
-        const totalEdges = links.length;
+        // Atualiza a contagem na interface
+        $('#total-nodes').text(`Nós: ${nodes.length}`);
+        $('#total-edges').text(`Arestas: ${links.length}`);
   
-        // Contagem por tipo de nó
+        // Formata a contagem por tipo
         const nodeTypes = {};
         nodes.forEach(node => {
           nodeTypes[node.type] = (nodeTypes[node.type] || 0) + 1;
         });
-  
-        // Formatando a exibição dos tipos de nós
         const typeSummary = Object.entries(nodeTypes)
           .map(([type, count]) => `${type}: ${count}`)
           .join(", ");
-  
-        // Atualizando a caixa de informações
-        $('#total-nodes').text(`Nós: ${totalNodes}`);
-        $('#total-edges').text(`Arestas: ${totalEdges}`);
         $('#type-nodes').text(`Tipos: ${typeSummary}`);
   
-        // Limpa o grafo anterior
-        graphContainer.selectAll("*").remove();
-        simulation.stop();
+        // Se já houver um worker ativo, encerra-o
+        if (worker) worker.terminate();
   
-        // Reinicia a simulação
-        simulation = d3.forceSimulation()
-          .force("link", d3.forceLink().id(d => d.id).distance(100))
-          .force("charge", d3.forceManyBody().strength(-300))
-          .force("center", d3.forceCenter(width / 2, height / 2));
+        // Inicializa o Web Worker para a simulação de força
+        worker = new Worker('/static/js/forceWorker.js');
+        worker.postMessage({
+          type: 'start',
+          nodes: nodes,
+          links: links,
+          width: width,
+          height: height
+        });
   
-        const link = graphContainer.append("g")
-          .attr("class", "links")
-          .selectAll("line")
-          .data(links)
-          .join("line")
-          .attr("class", "link")
-          .style("stroke-width", 1.5);
-  
-        const node = graphContainer.append("g")
-          .attr("class", "nodes")
-          .selectAll("g")
-          .data(nodes)
-          .join("g")
-          .attr("class", "node");
-  
-        node.append("circle")
-          .attr("r", 5)
-          .attr("fill", d => d.type === "Pessoa" ? "#ff7f0e" : "#1f77b4");
-  
-        node.append("text")
-          .text(d => d.label)
-          .attr("x", 8)
-          .attr("y", 3);
-  
-        simulation
-          .nodes(nodes)
-          .on("tick", ticked);
-  
-        simulation.force("link").links(links);
-  
-        function ticked() {
-          link
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-  
-          node.attr("transform", d => `translate(${d.x},${d.y})`);
+        // Recebe os ticks da simulação do Worker e redesenha o canvas
+        worker.onmessage = function (e) {
+          if (e.data.type === 'tick') {
+            nodes = e.data.nodes;
+            links = e.data.links;
+            draw();
+          }
         }
       } else {
         alert('Nenhum resultado encontrado.');
@@ -108,20 +118,19 @@ $(document).ready(function () {
     });
   }
   
-
   // Ao submeter o formulário, exibe o modal para seleção do nível
   $('#searchForm').submit(function (e) {
     e.preventDefault();
     $('#searchLevelModal').modal('show');
   });
-
+  
   // Eventos para os botões do modal de seleção de nível
   $('#modalLevel1, #modalLevel2').click(function () {
     const level = $(this).data('level');
     $('#searchLevelModal').modal('hide');
     loadGraph(level);
   });
-
+  
   // Geração do Relatório: redireciona para /report passando o parâmetro de consulta
   $('#generateReport').click(function () {
     const query = $('#query').val();
@@ -131,11 +140,11 @@ $(document).ready(function () {
     }
     window.location.href = `/report?query=${encodeURIComponent(query)}`;
   });
-
+  
   // Evento para sugestões de nomes conforme o usuário digita
   $('#query').on('input', function(){
     const query = $(this).val();
-    if(query.length < 2) {  // Opcional: só busca sugestões com pelo menos 2 caracteres
+    if(query.length < 2) {
       $('#suggestions').empty();
       return;
     }

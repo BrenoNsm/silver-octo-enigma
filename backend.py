@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # Configuração do MongoDB
 MONGO_URI = "mongodb://localhost:27017/"
-DATABASE_NAME = "atos1"
+DATABASE_NAME = "atos2"
 COLLECTION_NAME = "documentos"
 client = MongoClient(MONGO_URI)
 db = client[DATABASE_NAME]
@@ -83,6 +83,8 @@ def search():
                 ]
             })
             additional_pessoas.extend(pessoa_data)
+            print(f"Buscando pessoa: {person} com CPF: {cpf}")
+
 
         for pessoa in additional_pessoas:
             ato_id = pessoa.get("Identificador do Ato", "Ato Desconhecido")
@@ -270,3 +272,4 @@ def suggest():
 #    app.run(debug=True)
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
+
