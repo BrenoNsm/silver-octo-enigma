@@ -3,13 +3,13 @@ UNIVERSIDADE ESTADUAL DE RORAIMA
 CIÊNCIA DA COMPUTAÇÃO
 
 **Acadêmicos**
-Breno Nascimento
-Matheus Vicente
-Larisa Carvalho
+Breno Nascimento,
+Matheus Vicente,
+Larisa Carvalho,
 Gabriela Monteiro
 
 **Professores Orientadores**
-Dr. Bruno César Barreto de Figueirêdo
+Dr. Bruno César Barreto de Figueirêdo,
 Mestre Francisco Carlos de Lima Pereira
     
 
