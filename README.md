@@ -81,7 +81,7 @@ A interface web depende das bibliotecas JavaScript especificadas nos arquivos `p
    npm install
    ```
 
-4. (Opcional) Rode o spider para baixar novos PDFs:
+4. Rode o spider para baixar novos PDFs:
    ```sh
    cd scrapydoe
    scrapy crawl baixar_pdfs_spider
