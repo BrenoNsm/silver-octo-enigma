@@ -1,4 +1,17 @@
-# Silver Octo Enigma
+# Exploração de Padrões em Diários Oficiais com Expressões Regulares e Redes Complexas: Um Modelo para Auditoria e Controle
+UNIVERSIDADE ESTADUAL DE RORAIMA 
+CIÊNCIA DA COMPUTAÇÃO
+
+**Acadêmicos**
+Breno Nascimento
+Matheus Vicente
+Larisa Carvalho
+Gabriela Monteiro
+
+**Professores Orientadores**
+Dr. Bruno César Barreto de Figueirêdo
+Mestre Francisco Carlos de Lima Pereira
+    
 
 ## Visão Geral
 Este projeto realiza a extração, processamento e visualização de dados de diários oficiais estaduais, com foco na obtenção de informações sobre servidores públicos. O pipeline do projeto é composto por três etapas principais:
