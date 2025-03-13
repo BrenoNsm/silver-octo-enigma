@@ -1,12 +1,14 @@
 # Exploração de Padrões em Diários Oficiais com Expressões Regulares e Redes Complexas: Um Modelo para Auditoria e Controle
-UNIVERSIDADE ESTADUAL DE RORAIMA 
-CIÊNCIA DA COMPUTAÇÃO
+# UNIVERSIDADE ESTADUAL DE RORAIMA 
+**CIÊNCIA DA COMPUTAÇÃO**
 
-**Acadêmicos**
-Breno Nascimento,
-Matheus Vicente,
-Larisa Carvalho,
-Gabriela Monteiro
+**Equipe**
+| Acadêmicos | Professores Orientadores |
+|--------------|--------------|
+| Breno Nascimento |Dr. Bruno César Barreto de Figueirêdo
+| Matheus Vicente |Mestre Francisco Carlos de Lima Pereira
+| Larisa Carvalho |
+| Gabriela Monteiro |
 
 **Professores Orientadores**
 Dr. Bruno César Barreto de Figueirêdo,
