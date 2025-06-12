@@ -100,9 +100,11 @@ A interface web depende das bibliotecas JavaScript especificadas nos arquivos `p
    ```
 
 ### Rota de fiscalização
+
 O backend possui a rota `/fiscalizacao` que envia os atos públicos
 (portaria/número, tipo, pessoas envolvidas e um trecho do texto) para o Gemini
 e retorna uma análise automática de possíveis irregularidades. Defina a
 variável de ambiente `GEMINI_API_KEY` com a sua chave de API antes de executar o
 servidor.
+
 

@@ -289,6 +289,7 @@ def suggest():
 def fiscalizacao():
     limit = int(request.args.get("limit", 50))
 
+
     docs_cursor = collection.find(
         {},
         {
@@ -319,6 +320,7 @@ def fiscalizacao():
 
     analise = analyze_irregularities(prompt)
     return jsonify({"resumo": resumo_lines, "analise": analise})
+
 
 
 # Executa o servidor Flask
