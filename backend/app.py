@@ -288,23 +288,39 @@ def suggest():
 @app.route("/fiscalizacao")
 def fiscalizacao():
     limit = int(request.args.get("limit", 50))
-    pipeline = [
-        {"$unwind": "$pessoas"},
-        {"$group": {"_id": {"nome": "$pessoas.nome", "cpf": "$pessoas.cpf"}, "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}},
-        {"$limit": limit}
-    ]
-    resumo_data = list(collection.aggregate(pipeline))
-    resumo_texto = "\n".join(
-        f"{r['_id'].get('nome', 'Desconhecido')} ({r['_id'].get('cpf', 'sem cpf')}) - {r['count']} atos"
-        for r in resumo_data
-    )
+
+
+    docs_cursor = collection.find(
+        {},
+        {
+            "_id": 0,
+            "Identificador do Ato": 1,
+            "Tipo do Ato": 1,
+            "Texto do Ato": 1,
+            "pessoas": 1,
+        },
+    ).limit(limit)
+
+    resumo_lines = []
+    for doc in docs_cursor:
+        pessoas_txt = ", ".join(
+            f"{p.get('nome', 'Desconhecido')} ({p.get('cpf', 'sem cpf')})"
+            for p in doc.get("pessoas", [])
+        )
+        trecho = doc.get("Texto do Ato", "").replace("\n", " ")[:200]
+        resumo_lines.append(
+            f"{doc.get('Tipo do Ato', 'Ato')} {doc.get('Identificador do Ato', '')} - pessoas: {pessoas_txt}; trecho: {trecho}"
+        )
+
     prompt = (
-        "Analise a lista de servidores abaixo e a quantidade de atos que cada um possui."
-        " Aponte possiveis indicios de irregularidades no servico publico:\n" + resumo_texto
+        "A seguir estao descritos atos administrativos com as pessoas envolvidas e um trecho do texto de cada ato."
+        " Analise esses registros em busca de possiveis irregularidades no servico publico,"
+        " considerando repeticoes suspeitas, conflitos ou outras inconsistencias:\n" + "\n".join(resumo_lines)
     )
+
     analise = analyze_irregularities(prompt)
-    return jsonify({"resumo": resumo_texto, "analise": analise})
+    return jsonify({"resumo": resumo_lines, "analise": analise})
+
 
 
 # Executa o servidor Flask
