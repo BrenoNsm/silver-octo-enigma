@@ -33,9 +33,11 @@ O projeto está organizado nos seguintes diretórios e arquivos principais:
 │   ├── ...
 ├── processador/
 │   ├── extrator.py
+│   ├── nome_utils.py
+│   ├── db.py
 │   ├── servidores_cpf_randomicos.csv
 ├── backend/
-│   ├── ...
+│   ├── app.py
 ├── web/
 │   ├── package.json
 │   ├── package-lock.json
@@ -94,7 +96,13 @@ A interface web depende das bibliotecas JavaScript especificadas nos arquivos `p
 
 6. Inicie o backend:
    ```sh
-   cd backend
-   python run.py
+   python backend/app.py
    ```
+
+### Rota de fiscalização
+O backend possui a rota `/fiscalizacao` que envia os atos públicos
+(portaria/número, tipo, pessoas envolvidas e um trecho do texto) para o Gemini
+e retorna uma análise automática de possíveis irregularidades. Defina a
+variável de ambiente `GEMINI_API_KEY` com a sua chave de API antes de executar o
+servidor.
 

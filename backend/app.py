@@ -2,6 +2,7 @@ from flask import Flask, Response, render_template, request, jsonify
 from pymongo import MongoClient
 import networkx as nx
 from io import BytesIO
+from .gemini_client import analyze_irregularities
 
 # Configuração do Flask
 app = Flask(__name__)
@@ -13,6 +14,11 @@ COLLECTION_NAME = "documentos"
 client = MongoClient(MONGO_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
+
+# Garante que os principais campos estejam indexados para acelerar as buscas
+collection.create_index("pessoas.nome")
+collection.create_index("pessoas.cpf")
+collection.create_index("Identificador do Ato")
 
 # Rota para a página inicial
 @app.route("/")
@@ -73,18 +79,30 @@ def search():
 
     # Expandir para nível 2 ou mais
     if level > 1:
-        additional_pessoas = []
+        names = []
+        cpfs = []
         for person in person_to_acts.keys():
-            cpf = person.split("(")[-1].strip(")") if "(" in person else None
-            pessoa_data = collection.find({
-                "$or": [
-                    {"pessoas.nome": {"$regex": person, "$options": "i"}},
-                    {"pessoas.cpf": cpf}
-                ]
-            })
-            additional_pessoas.extend(pessoa_data)
-            print(f"Buscando pessoa: {person} com CPF: {cpf}")
+            if "(" in person and ")" in person:
+                name_part, cpf_part = person.split("(")
+                names.append(name_part.strip())
+                cpf = cpf_part.strip(")")
+                if cpf:
+                    cpfs.append(cpf)
+            else:
+                if person.isdigit():
+                    cpfs.append(person)
+                else:
+                    names.append(person)
 
+        query_filters = []
+        if names:
+            query_filters.append({"pessoas.nome": {"$in": names}})
+        if cpfs:
+            query_filters.append({"pessoas.cpf": {"$in": cpfs}})
+
+        additional_pessoas = []
+        if query_filters:
+            additional_pessoas = list(collection.find({"$or": query_filters}))
 
         for pessoa in additional_pessoas:
             ato_id = pessoa.get("Identificador do Ato", "Ato Desconhecido")
@@ -265,6 +283,42 @@ def suggest():
     results = list(collection.aggregate(pipeline))
     suggestions = [result["_id"] for result in results if result["_id"]]
     return jsonify(suggestions=suggestions)
+
+
+@app.route("/fiscalizacao")
+def fiscalizacao():
+    limit = int(request.args.get("limit", 50))
+
+    docs_cursor = collection.find(
+        {},
+        {
+            "_id": 0,
+            "Identificador do Ato": 1,
+            "Tipo do Ato": 1,
+            "Texto do Ato": 1,
+            "pessoas": 1,
+        },
+    ).limit(limit)
+
+    resumo_lines = []
+    for doc in docs_cursor:
+        pessoas_txt = ", ".join(
+            f"{p.get('nome', 'Desconhecido')} ({p.get('cpf', 'sem cpf')})"
+            for p in doc.get("pessoas", [])
+        )
+        trecho = doc.get("Texto do Ato", "").replace("\n", " ")[:200]
+        resumo_lines.append(
+            f"{doc.get('Tipo do Ato', 'Ato')} {doc.get('Identificador do Ato', '')} - pessoas: {pessoas_txt}; trecho: {trecho}"
+        )
+
+    prompt = (
+        "A seguir estao descritos atos administrativos com as pessoas envolvidas e um trecho do texto de cada ato."
+        " Analise esses registros em busca de possiveis irregularidades no servico publico,"
+        " considerando repeticoes suspeitas, conflitos ou outras inconsistencias:\n" + "\n".join(resumo_lines)
+    )
+
+    analise = analyze_irregularities(prompt)
+    return jsonify({"resumo": resumo_lines, "analise": analise})
 
 
 # Executa o servidor Flask
