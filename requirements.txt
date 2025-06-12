@@ -11,3 +11,4 @@ scrapy
 Flask-Caching
 igraph
 openpyxl
+google-generativeai

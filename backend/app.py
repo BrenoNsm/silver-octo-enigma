@@ -2,6 +2,7 @@ from flask import Flask, Response, render_template, request, jsonify
 from pymongo import MongoClient
 import networkx as nx
 from io import BytesIO
+from .gemini_client import analyze_irregularities
 
 # Configuração do Flask
 app = Flask(__name__)
@@ -282,6 +283,28 @@ def suggest():
     results = list(collection.aggregate(pipeline))
     suggestions = [result["_id"] for result in results if result["_id"]]
     return jsonify(suggestions=suggestions)
+
+
+@app.route("/fiscalizacao")
+def fiscalizacao():
+    limit = int(request.args.get("limit", 50))
+    pipeline = [
+        {"$unwind": "$pessoas"},
+        {"$group": {"_id": {"nome": "$pessoas.nome", "cpf": "$pessoas.cpf"}, "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": limit}
+    ]
+    resumo_data = list(collection.aggregate(pipeline))
+    resumo_texto = "\n".join(
+        f"{r['_id'].get('nome', 'Desconhecido')} ({r['_id'].get('cpf', 'sem cpf')}) - {r['count']} atos"
+        for r in resumo_data
+    )
+    prompt = (
+        "Analise a lista de servidores abaixo e a quantidade de atos que cada um possui."
+        " Aponte possiveis indicios de irregularidades no servico publico:\n" + resumo_texto
+    )
+    analise = analyze_irregularities(prompt)
+    return jsonify({"resumo": resumo_texto, "analise": analise})
 
 
 # Executa o servidor Flask

@@ -99,3 +99,9 @@ A interface web depende das bibliotecas JavaScript especificadas nos arquivos `p
    python backend/app.py
    ```
 
+### Rota de fiscalização
+O backend possui a rota `/fiscalizacao` que realiza uma análise resumida dos
+dados para identificar possíveis irregularidades utilizando a IA Gemini. Para
+utilizar essa funcionalidade é necessário definir a variável de ambiente
+`GEMINI_API_KEY` com a sua chave de API antes de executar o servidor.
+
