@@ -33,9 +33,11 @@ O projeto está organizado nos seguintes diretórios e arquivos principais:
 │   ├── ...
 ├── processador/
 │   ├── extrator.py
+│   ├── nome_utils.py
+│   ├── db.py
 │   ├── servidores_cpf_randomicos.csv
 ├── backend/
-│   ├── ...
+│   ├── app.py
 ├── web/
 │   ├── package.json
 │   ├── package-lock.json
@@ -94,7 +96,6 @@ A interface web depende das bibliotecas JavaScript especificadas nos arquivos `p
 
 6. Inicie o backend:
    ```sh
-   cd backend
-   python run.py
+   python backend/app.py
    ```
 

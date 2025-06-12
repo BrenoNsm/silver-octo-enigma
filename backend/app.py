@@ -14,6 +14,11 @@ client = MongoClient(MONGO_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
+# Garante que os principais campos estejam indexados para acelerar as buscas
+collection.create_index("pessoas.nome")
+collection.create_index("pessoas.cpf")
+collection.create_index("Identificador do Ato")
+
 # Rota para a página inicial
 @app.route("/")
 def index():
@@ -73,18 +78,30 @@ def search():
 
     # Expandir para nível 2 ou mais
     if level > 1:
-        additional_pessoas = []
+        names = []
+        cpfs = []
         for person in person_to_acts.keys():
-            cpf = person.split("(")[-1].strip(")") if "(" in person else None
-            pessoa_data = collection.find({
-                "$or": [
-                    {"pessoas.nome": {"$regex": person, "$options": "i"}},
-                    {"pessoas.cpf": cpf}
-                ]
-            })
-            additional_pessoas.extend(pessoa_data)
-            print(f"Buscando pessoa: {person} com CPF: {cpf}")
+            if "(" in person and ")" in person:
+                name_part, cpf_part = person.split("(")
+                names.append(name_part.strip())
+                cpf = cpf_part.strip(")")
+                if cpf:
+                    cpfs.append(cpf)
+            else:
+                if person.isdigit():
+                    cpfs.append(person)
+                else:
+                    names.append(person)
 
+        query_filters = []
+        if names:
+            query_filters.append({"pessoas.nome": {"$in": names}})
+        if cpfs:
+            query_filters.append({"pessoas.cpf": {"$in": cpfs}})
+
+        additional_pessoas = []
+        if query_filters:
+            additional_pessoas = list(collection.find({"$or": query_filters}))
 
         for pessoa in additional_pessoas:
             ato_id = pessoa.get("Identificador do Ato", "Ato Desconhecido")
